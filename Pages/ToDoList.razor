@@ -1,32 +1,55 @@
-﻿
-@page "/todolist"
+﻿@page "/todolist"
+@using Raven.Client.Documents
+@inject IJSRuntime JSRuntime
 
-<PageTitle>To do list</PageTitle>
-
-<h1>Lista</h1>
-
-<ul>
-    @foreach(var item in ToDos) 
-    {
-        <li>@item.Title</li>
-    }
-</ul>
-
-<input @bind="_task" placeholder="Co musisz zrobic?">
-<button @onclick="save">Dodaj</button>
-
-
-@code {
-    private List<TodoItem> ToDos = new();
-    private string _task = string.Empty;
-    private void save() 
-    {
-        if(string.IsNullOrEmpty(_task)) return;
-        
-        ToDos.Add(new TodoItem
+<input @bind="InputValue" type="text" placeholder="Wpisz coś..." />
+<button @onclick="AddItem">Dodaj</button>
+@if (Tasks == null)
+{
+    <p>Ładowanie...</p>
+}
+else
+{
+    <ul>
+        @foreach (var item in Tasks)
         {
-            Title = _task
-        });
-        _task = string.Empty;
+            <li>@i. @item.WhatToDo</li>
+            i++;
+        }
+    </ul>
+    i = 1;
+}
+@code {
+    public int i = 1;
+    private string InputValue { get; set; }
+    private List<Data.Task> Tasks { get; set; }
+    private DocumentStore store;
+
+    private async Task AddItem()
+    {
+        if (string.IsNullOrEmpty(InputValue))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Błąd! Pole tekstowe nie może być puste!");
+        }
+        else
+        {
+            using var session = store.OpenSession();
+            session.Store(new Data.Task { WhatToDo = InputValue });
+            session.SaveChanges();
+            Tasks = session.Query<Data.Task>().ToList();
+            InputValue = "";
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        store = new DocumentStore
+        {
+            Urls = new string[] { "http://localhost:8080" },
+            Database = "Tasks",
+        };
+        store.Initialize();
+
+        using var session = store.OpenSession();
+        Tasks = session.Query<Data.Task>().ToList();
     }
 }
