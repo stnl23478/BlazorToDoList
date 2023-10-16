@@ -13,7 +13,7 @@
 </ul>
 
 <input @bind="_task" placeholder="Co musisz zrobic?">
-<button @onclick="save">Save</button>
+<button @onclick="save">Dodaj</button>
 
 
 @code {
@@ -22,8 +22,6 @@
     private void save() 
     {
         if(string.IsNullOrEmpty(_task)) return;
-        // comment
-//ToDo vs djgfklrdjkgflkea
         
         ToDos.Add(new TodoItem
         {
