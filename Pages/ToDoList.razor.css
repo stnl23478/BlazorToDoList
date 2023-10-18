@@ -1,0 +1,12 @@
+.delButton {
+    color: red;
+}
+.edButton {
+    color: yellowgreen;
+}
+.isDoneButton {
+    color: green;
+}
+.isNotDoneButton {
+    color: darkred;
+}
