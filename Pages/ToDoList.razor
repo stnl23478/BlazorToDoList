@@ -1,30 +1,96 @@
-﻿@page "/todolist"
+﻿@page "/"
 @using Raven.Client.Documents
 @inject IJSRuntime JSRuntime
+<h1>Lista</h1>
 
-<input @bind="InputValue" type="text" placeholder="Wpisz coś..." />
-<button @onclick="AddItem">Dodaj</button>
 @if (Tasks == null)
 {
-    <p>Ładowanie...</p>
+    <p>Lista jest pusta</p>
 }
 else
 {
     <ul>
         @foreach (var item in Tasks)
         {
-            <li>@i. @item.WhatToDo</li>
+            if (@item.isDone)
+            {
+                <li><s>@i. @item.WhatToDo </s> <button class="isNotDoneButton" @onclick="() => notDone(item)">Oznacz jako niewykonane</button> <button class="edButton" @onclick="() => Edit(item)">Edytuj</button> <button class="delButton" @onclick="() => Delete(item)">Usuń</button></li>
+            }
+            else
+            {
+                <li>@i. @item.WhatToDo <button class="isDoneButton" @onclick="() => Done(item)">Oznacz jako wykonane</button> <button class="edButton" @onclick="() => Edit(item)">Edytuj</button> <button class="delButton" @onclick="() => Delete(item)">Usuń</button> </li>
+            }
             i++;
         }
     </ul>
     i = 1;
 }
+<hr/>
+<h2>Dodawanie zadań do listy</h2>
+<br/>
+<input @bind="InputValue" type="text" placeholder="Napisz nowe zadanie" />
+<button @onclick="AddItem">Dodaj</button>
+<hr/>
+<h2>Edytowanie treści zadania z listy</h2>
+<br/>
+<input @bind="OldInputValue" placeholder="Wybierz zadanie z listy" disabled>
+<input @bind="EditInputValue" type="text" placeholder="Napisz nową nazwę zadania" />
+<button @onclick="EditValue">Edytuj</button>
 @code {
     public int i = 1;
     private string InputValue { get; set; }
+    private string OldInputValue { get; set; }
+    public string taskId { get; set; }
+    private string EditInputValue { get; set; }
     private List<Data.Task> Tasks { get; set; }
+    private bool isDone { get; set; }
     private DocumentStore store;
 
+    private void Done(Data.Task selectedTask)
+    {       
+        using var session = store.OpenSession();
+        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+        loadedTask.isDone = true;
+        session.SaveChanges();
+        Tasks = session.Query<Data.Task>().ToList();
+    }
+    private void notDone(Data.Task selectedTask)
+    {       
+        using var session = store.OpenSession();
+        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+        loadedTask.isDone = false;
+        session.SaveChanges();
+        Tasks = session.Query<Data.Task>().ToList();
+    }
+    private void Delete(Data.Task selectedTask)
+    {
+        using var session = store.OpenSession();
+        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+        session.Delete(loadedTask);
+        session.SaveChanges();
+        Tasks = session.Query<Data.Task>().ToList();
+        OldInputValue = "";
+    }
+
+    private void Edit(Data.Task selectedTask)
+    {
+        using var session = store.OpenSession();
+        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+        OldInputValue = loadedTask.WhatToDo;
+        taskId = loadedTask.Id;
+    }
+
+    private async Task EditValue()
+    {
+        using var session = store.OpenSession();
+        Data.Task loadedTask = session.Load<Data.Task>(taskId);
+        loadedTask.WhatToDo = EditInputValue;
+        session.SaveChanges();
+        Tasks = session.Query<Data.Task>().ToList();
+        JSRuntime.InvokeVoidAsync("alert", "Pomyslnie zmieniono nazwe zadania z \"" + OldInputValue + "\" na \"" + EditInputValue + "\"");
+        EditInputValue = "";
+        OldInputValue = "";
+    }
     private async Task AddItem()
     {
         if (string.IsNullOrEmpty(InputValue))
@@ -34,8 +100,8 @@ else
         else
         {
             using var session = store.OpenSession();
-            session.Store(new Data.Task { WhatToDo = InputValue });
-            session.SaveChanges();
+            session.Store(new Data.Task { WhatToDo = InputValue, isDone = isDone});
+            session.SaveChanges();  
             Tasks = session.Query<Data.Task>().ToList();
             InputValue = "";
         }
