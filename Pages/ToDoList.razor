@@ -28,15 +28,35 @@ else
 <hr/>
 <h2>Dodawanie zadań do listy</h2>
 <br/>
-<input @bind="InputValue" type="text" placeholder="Napisz nowe zadanie" />
+<label for="addTask">Napisz nowe zadanie</label>
+<input @bind="InputValue" name="addTask" type="text" />
 <Button Color="ButtonColor.Primary" @onclick="AddItem">Dodaj</Button>
 <hr/>
 <div class="edit-menu" style="@editStyles">
     <h2>Edytowanie treści zadania z listy</h2>
     <br/>
-    <input @bind="OldInputValue" placeholder="Wybierz zadanie z listy" disabled>
-    <input @bind="EditInputValue" type="text" placeholder="Napisz nową nazwę zadania" />
+    <label for="oldinputvalue">Edytujesz: </label>
+    <input @bind="OldInputValue" name="oldinputvalue" disabled>
+    <label for="newinputvalue"> Na: </label>
+    <input @bind="EditInputValue" name="newinputvalue" type="text" />
     <Button Color="ButtonColor.Warning" @onclick="EditValue">Edytuj</Button>
+</div>
+<div class="task-table">
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Zadanie</th>
+            <th>Czy zrobione?</th>
+        </tr>
+        @foreach (var item in Tasks.OrderBy(t => t.SortId))
+        {
+            <tr>
+                <td>@item.SortId</td>
+                <td>@item.WhatToDo</td>
+                <td>@item.isDone</td>
+            </tr>
+        }
+    </table>
 </div>
 @code {
     public int i { get; set; }
@@ -52,8 +72,7 @@ else
     private void changeTaskStatus(Data.Task selectedTask)
     {       
         using var session = store.OpenSession();
-        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
-        loadedTask.isDone = !loadedTask.isDone;
+        selectedTask.isDone = !selectedTask.isDone;
         session.SaveChanges();
         Tasks = session.Query<Data.Task>().ToList();
     }

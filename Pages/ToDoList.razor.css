@@ -43,3 +43,15 @@
 Switch:hover {
     cursor: pointer;
 }
+.task-table {
+    position: absolute;
+    bottom: 0px;
+}
+table {
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+}
