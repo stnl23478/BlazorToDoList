@@ -1,64 +1,59 @@
 ﻿@page "/"
 @using Raven.Client.Documents
+@using System.Globalization
 @inject IJSRuntime JSRuntime
 <h1>Lista</h1>
-
 @if (Tasks == null)
 {
     <p>Lista jest pusta</p>
 }
 else
 {
+    i = 1;
     <ul>
-        @foreach (var item in Tasks)
+        @foreach (var item in Tasks.OrderBy(t => t.SortId))
         {
-            if (@item.isDone)
-            {
-                <li><s>@i. @item.WhatToDo </s> <button class="isNotDoneButton" @onclick="() => notDone(item)">Oznacz jako niewykonane</button> <button class="edButton" @onclick="() => Edit(item)">Edytuj</button> <button class="delButton" @onclick="() => Delete(item)">Usuń</button></li>
-            }
-            else
-            {
-                <li>@i. @item.WhatToDo <button class="isDoneButton" @onclick="() => Done(item)">Oznacz jako wykonane</button> <button class="edButton" @onclick="() => Edit(item)">Edytuj</button> <button class="delButton" @onclick="() => Delete(item)">Usuń</button> </li>
-            }
+            <li>
+                <div class="task-line">
+                    <div class="task-name @(item.isDone ? "isDone" : "isNotDone")">@item.SortId. @item.WhatToDo</div> &ensp;
+                    <Switch class="task-checkbox" @onchange="() => changeTaskStatus(item)" @bind-Value="item.isDone" checked="@item.isDone"/> &ensp;
+                    <button class="edButton" @onclick="() => Edit(item)"><Icon Name="IconName.Pencil"/></button> &ensp;
+                    <button class="delButton" @onclick="() => Delete(item)"><Icon Name="IconName.Trash"/></button>
+                </div>
+            </li>
             i++;
         }
     </ul>
-    i = 1;
 }
 <hr/>
 <h2>Dodawanie zadań do listy</h2>
 <br/>
 <input @bind="InputValue" type="text" placeholder="Napisz nowe zadanie" />
-<button @onclick="AddItem">Dodaj</button>
+<Button Color="ButtonColor.Primary" @onclick="AddItem">Dodaj</Button>
 <hr/>
-<h2>Edytowanie treści zadania z listy</h2>
-<br/>
-<input @bind="OldInputValue" placeholder="Wybierz zadanie z listy" disabled>
-<input @bind="EditInputValue" type="text" placeholder="Napisz nową nazwę zadania" />
-<button @onclick="EditValue">Edytuj</button>
+<div class="edit-menu" style="@editStyles">
+    <h2>Edytowanie treści zadania z listy</h2>
+    <br/>
+    <input @bind="OldInputValue" placeholder="Wybierz zadanie z listy" disabled>
+    <input @bind="EditInputValue" type="text" placeholder="Napisz nową nazwę zadania" />
+    <Button Color="ButtonColor.Warning" @onclick="EditValue">Edytuj</Button>
+</div>
 @code {
-    public int i = 1;
+    public int i { get; set; }
     private string InputValue { get; set; }
     private string OldInputValue { get; set; }
+    private string editStyles = "visibility: hidden;";
     public string taskId { get; set; }
     private string EditInputValue { get; set; }
     private List<Data.Task> Tasks { get; set; }
     private bool isDone { get; set; }
     private DocumentStore store;
-
-    private void Done(Data.Task selectedTask)
+    
+    private void changeTaskStatus(Data.Task selectedTask)
     {       
         using var session = store.OpenSession();
         Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
-        loadedTask.isDone = true;
-        session.SaveChanges();
-        Tasks = session.Query<Data.Task>().ToList();
-    }
-    private void notDone(Data.Task selectedTask)
-    {       
-        using var session = store.OpenSession();
-        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
-        loadedTask.isDone = false;
+        loadedTask.isDone = !loadedTask.isDone;
         session.SaveChanges();
         Tasks = session.Query<Data.Task>().ToList();
     }
@@ -74,22 +69,31 @@ else
 
     private void Edit(Data.Task selectedTask)
     {
-        using var session = store.OpenSession();
-        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
-        OldInputValue = loadedTask.WhatToDo;
-        taskId = loadedTask.Id;
+            using var session = store.OpenSession();
+            Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+            OldInputValue = loadedTask.WhatToDo;
+            taskId = loadedTask.Id;
+            editStyles = "visibility: visible;";
     }
 
     private async Task EditValue()
     {
-        using var session = store.OpenSession();
-        Data.Task loadedTask = session.Load<Data.Task>(taskId);
-        loadedTask.WhatToDo = EditInputValue;
-        session.SaveChanges();
-        Tasks = session.Query<Data.Task>().ToList();
-        JSRuntime.InvokeVoidAsync("alert", "Pomyslnie zmieniono nazwe zadania z \"" + OldInputValue + "\" na \"" + EditInputValue + "\"");
-        EditInputValue = "";
-        OldInputValue = "";
+        if (string.IsNullOrEmpty(EditInputValue))
+        {
+            JSRuntime.InvokeVoidAsync("alert", "Błąd! Nowe zadanie nie może być puste!");    
+        }
+        else
+        {
+            using var session = store.OpenSession();
+            Data.Task loadedTask = session.Load<Data.Task>(taskId);
+            loadedTask.WhatToDo = EditInputValue;
+            session.SaveChanges();
+            Tasks = session.Query<Data.Task>().ToList();
+            JSRuntime.InvokeVoidAsync("alert", "Pomyslnie zmieniono nazwe zadania z \"" + OldInputValue + "\" na \"" + EditInputValue + "\"");
+            EditInputValue = "";
+            OldInputValue = "";
+            editStyles = "visibility: hidden;";
+        }
     }
     private async Task AddItem()
     {
@@ -100,7 +104,7 @@ else
         else
         {
             using var session = store.OpenSession();
-            session.Store(new Data.Task { WhatToDo = InputValue, isDone = isDone});
+            session.Store(new Data.Task { WhatToDo = InputValue, isDone = isDone, SortId = i++});
             session.SaveChanges();  
             Tasks = session.Query<Data.Task>().ToList();
             InputValue = "";

@@ -1,12 +1,45 @@
 .delButton {
     color: red;
+    background: none;
+    border: 1px solid rgba(0,0,0,.25);
+    transition: all .4s;
+    border-radius: 50%;
+    height: 30px;
+    width: 30px;
+}
+.delButton:hover {
+    background-color: red;
+    color: white;
+    border-color: darkred;
 }
 .edButton {
-    color: yellowgreen;
+    color: orange;
+    background: none;
+    border: 1px solid rgba(0,0,0,.25);
+    transition: all .4s;
+    border-radius: 50%;
+    height: 30px;
+    width: 30px;
 }
-.isDoneButton {
-    color: green;
+.edButton:hover {
+    background-color: orange;
+    color: white;
+    border-color: darkorange;
 }
-.isNotDoneButton {
-    color: darkred;
+.isNotDone {
+    text-decoration: none;
+}
+.isDone {
+    text-decoration: line-through;
+    color: gray;
+}
+.task-name {
+    display: inline;
+}
+.task-line {
+    display: flex;
+    align-items: center;
+}
+Switch:hover {
+    cursor: pointer;
 }
