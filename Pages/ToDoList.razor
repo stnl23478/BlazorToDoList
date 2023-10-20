@@ -74,23 +74,31 @@
         private bool isDone { get; set; }
         private bool isDisabled { get; set; }
         private DocumentStore store;
-        private string selectedFilter;
+        private string selectedFilter = "notDone";
 
         private void fliterList(ChangeEventArgs e)
         {
+            selectedFilter = e.Value?.ToString();
+            Refresh();
+        }
+
+        private void Refresh()
+        {
+            ChangeEventArgs e;
             using var session = store.OpenSession();
             var query = session.Query<Data.Task>();
-            if (e.Value?.ToString() == "notDone") 
+            if (selectedFilter == "notDone")
                 query = query.Where(w => w.isDone == false);
             Tasks = query.ToList();
         }
+
         private void changeTaskStatus(Data.Task selectedTask)
         {       
             using var session = store.OpenSession();
             Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
             loadedTask.isDone = !loadedTask.isDone;
             session.SaveChanges();
-            Tasks = session.Query<Data.Task>().ToList();
+            Refresh();
         }
         private void Delete(Data.Task selectedTask)
         {
@@ -98,7 +106,7 @@
             Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
             session.Delete(loadedTask);
             session.SaveChanges();
-            Tasks = session.Query<Data.Task>().ToList();
+            Refresh();
             OldInputValue = "";
         }
 
@@ -115,13 +123,14 @@
 
         private void Save(Data.Task selectedTask)
         {
-                using var session = store.OpenSession();
-                Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
-                loadedTask.WhatToDo = selectedTask.WhatToDo;
-                loadedTask.isDisabled = !loadedTask.isDisabled;
-                session.SaveChanges();
-                Tasks = session.Query<Data.Task>().ToList();
+            using var session = store.OpenSession();
+            Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+            loadedTask.WhatToDo = selectedTask.WhatToDo;
+            loadedTask.isDisabled = !loadedTask.isDisabled;
+            session.SaveChanges();
+            Refresh();
         }
+
         private async Task AddItem()
         {
             if (string.IsNullOrEmpty(InputValue))
@@ -145,8 +154,6 @@
                 Database = "Tasks",
             };
             store.Initialize();
-
-            using var session = store.OpenSession();
-            Tasks = session.Query<Data.Task>().Where(w => w.isDone == false).ToList();
+            Refresh();
         }
     }
