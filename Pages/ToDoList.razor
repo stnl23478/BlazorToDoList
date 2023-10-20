@@ -1,8 +1,14 @@
 ﻿@page "/"
 @using Raven.Client.Documents
 @using System.Globalization
+@using Raven.Client.Documents.Linq
 @inject IJSRuntime JSRuntime
-    <h1>Lista - @Tasks.Count elementów</h1>
+
+<h1>Lista - @Tasks.Count elementów</h1>
+<select @onchange="fliterList">
+    <option value="notDone">Niewykonane</option>
+    <option value="all">Wszystkie</option>
+</select>
     @if (Tasks == null)
     {
         <p>Lista jest pusta</p>
@@ -39,15 +45,6 @@
     <input @bind="InputValue" name="addTask" type="text" />
     <Button Color="ButtonColor.Primary" @onclick="AddItem">Dodaj</Button>
     <hr/>
-    <div class="edit-menu" style="@editStyles">
-        <h2>Edytowanie treści zadania z listy</h2>
-        <br/>
-        <label for="oldinputvalue">Edytujesz: </label>
-        <input @bind="OldInputValue" name="oldinputvalue" disabled>
-        <label for="newinputvalue"> Na: </label>
-        <input @bind="EditInputValue" name="newinputvalue" type="text" />
-        <Button Color="ButtonColor.Warning" @onclick="EditValue">Edytuj</Button>
-    </div>
     <div class="task-table">
         <table>
             <tr>
@@ -69,16 +66,24 @@
     </div>
     @code {
         public int i { get; set; }
-        public int najwiekszeId { get; set; }
         private string InputValue { get; set; }
         private string OldInputValue { get; set; }
         private string editStyles = "visibility: hidden;";
         public string taskId { get; set; }
-        private string EditInputValue { get; set; }
         private List<Data.Task> Tasks { get; set; }
         private bool isDone { get; set; }
+        private bool isDisabled { get; set; }
         private DocumentStore store;
-        
+        private string selectedFilter;
+
+        private void fliterList(ChangeEventArgs e)
+        {
+            using var session = store.OpenSession();
+            var query = session.Query<Data.Task>();
+            if (e.Value?.ToString() == "notDone") 
+                query = query.Where(w => w.isDone == false);
+            Tasks = query.ToList();
+        }
         private void changeTaskStatus(Data.Task selectedTask)
         {       
             using var session = store.OpenSession();
@@ -116,11 +121,6 @@
                 loadedTask.isDisabled = !loadedTask.isDisabled;
                 session.SaveChanges();
                 Tasks = session.Query<Data.Task>().ToList();
-                JSRuntime.InvokeVoidAsync("alert", "Pomyslnie zmieniono nazwe zadania z \"" + OldInputValue + "\" na \"" + EditInputValue + "\"");
-                EditInputValue = "";
-                OldInputValue = "";
-                editStyles = "visibility: hidden;";
-            }
         }
         private async Task AddItem()
         {
@@ -147,6 +147,6 @@
             store.Initialize();
 
             using var session = store.OpenSession();
-            Tasks = session.Query<Data.Task>().ToList();
+            Tasks = session.Query<Data.Task>().Where(w => w.isDone == false).ToList();
         }
     }
