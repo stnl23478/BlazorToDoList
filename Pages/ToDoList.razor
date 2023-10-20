@@ -15,10 +15,17 @@
             {
                 <li>
                     <div class="task-line">
-                        <div class="task-name @(item.isDone ? "isDone" : "isNotDone")">@item.SortId. @item.WhatToDo</div> &ensp;
+                        <div class="task-name @(item.isDone ? "isDone" : "isNotDone")">@item.SortId. <input @bind="item.WhatToDo" class="@(item.isDone ? "isDone" : "isNotDone") @(item.isDisabled ? "isDisabled" : "isNotDisabled")" disabled="@item.isDisabled" /></div> &ensp;
                         <Switch class="task-checkbox" @onclick="() => changeTaskStatus(item)" @bind-Value="item.isDone" checked="@item.isDone"/> &ensp;
-                        <button class="edButton" @onclick="() => Edit(item)"><Icon Name="IconName.Pencil"/></button> &ensp;
-                        <button class="delButton" @onclick="() => Delete(item)"><Icon Name="IconName.Trash"/></button>
+                        @if (item.isDisabled)
+                        {
+                            <button class="edButton" @onclick="() => Edit(item)"><Icon Name="IconName.Pencil"/></button>   
+                        }
+                        else
+                        {
+                            <button class="saveButton" @onclick="() => Save(item)"><Icon Name="IconName.Save"/></button>
+                        }
+                        <button class="delButton" @onclick="() => Delete(item)"><Icon Name="IconName.Trash"/></button> &ensp;
                     </div>
                 </li>
                 i++;
@@ -47,6 +54,7 @@
                 <th>ID</th>
                 <th>Zadanie</th>
                 <th>Czy zrobione?</th>
+                <th>Czy Wyłączony?</th>
             </tr>
             @foreach (var item in Tasks.OrderBy(t => t.SortId))
             {
@@ -54,6 +62,7 @@
                     <td>@item.SortId</td>
                     <td>@item.WhatToDo</td>
                     <td class="@(item.isDone ? "true" : "false")">@item.isDone</td>
+                    <td class="@(item.isDisabled ? "true" : "false")">@item.isDisabled</td>
                 </tr>
             }
         </table>
@@ -94,20 +103,17 @@
                 Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
                 OldInputValue = loadedTask.WhatToDo;
                 taskId = loadedTask.Id;
-                editStyles = "visibility: visible;";
+                loadedTask.isDisabled = !loadedTask.isDisabled;
+                session.SaveChanges();
+                Tasks = session.Query<Data.Task>().ToList();
         }
 
-        private async Task EditValue()
+        private void Save(Data.Task selectedTask)
         {
-            if (string.IsNullOrEmpty(EditInputValue))
-            {
-                JSRuntime.InvokeVoidAsync("alert", "Błąd! Nowe zadanie nie może być puste!");    
-            }
-            else
-            {
                 using var session = store.OpenSession();
-                Data.Task loadedTask = session.Load<Data.Task>(taskId);
-                loadedTask.WhatToDo = EditInputValue;
+                Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+                loadedTask.WhatToDo = selectedTask.WhatToDo;
+                loadedTask.isDisabled = !loadedTask.isDisabled;
                 session.SaveChanges();
                 Tasks = session.Query<Data.Task>().ToList();
                 JSRuntime.InvokeVoidAsync("alert", "Pomyslnie zmieniono nazwe zadania z \"" + OldInputValue + "\" na \"" + EditInputValue + "\"");
@@ -125,7 +131,7 @@
             else
             {
                 using var session = store.OpenSession();
-                session.Store(new Data.Task { WhatToDo = InputValue, isDone = isDone, SortId = Tasks[Tasks.Count - 1].SortId + 1 });
+                session.Store(new Data.Task { WhatToDo = InputValue, isDone = isDone, SortId = Tasks[Tasks.Count - 1].SortId + 1, isDisabled = true});
                 session.SaveChanges();  
                 Tasks = session.Query<Data.Task>().ToList();
                 InputValue = "";

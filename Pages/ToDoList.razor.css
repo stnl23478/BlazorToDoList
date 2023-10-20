@@ -26,12 +26,34 @@
     color: white;
     border-color: darkorange;
 }
+.saveButton {
+    color: #0a53be;
+    background: none;
+    border: 1px solid rgba(0,0,0,.25);
+    transition: all .4s;
+    border-radius: 50%;
+    height: 30px;
+    width: 30px;
+}
+.saveButton:hover {
+    background-color: #0a53be;
+    color: white;
+    border-color: darkblue;
+}
 .isNotDone {
     text-decoration: none;
 }
 .isDone {
     text-decoration: line-through;
-    color: gray;
+    color: grey;
+}
+.isNotDisabled {
+    background-color: #0a53be;
+    color: white;
+    border-radius: 8px;
+}
+input {
+    width: fit-content;
 }
 .task-name {
     display: inline;
