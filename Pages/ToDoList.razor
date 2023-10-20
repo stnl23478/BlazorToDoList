@@ -2,143 +2,145 @@
 @using Raven.Client.Documents
 @using System.Globalization
 @inject IJSRuntime JSRuntime
-<h1>Lista</h1>
-@if (Tasks == null)
-{
-    <p>Lista jest pusta</p>
-}
-else
-{
-    i = 1;
-    <ul>
-        @foreach (var item in Tasks.OrderBy(t => t.SortId))
-        {
-            <li>
-                <div class="task-line">
-                    <div class="task-name @(item.isDone ? "isDone" : "isNotDone")">@item.SortId. @item.WhatToDo</div> &ensp;
-                    <Switch class="task-checkbox" @onchange="() => changeTaskStatus(item)" @bind-Value="item.isDone" checked="@item.isDone"/> &ensp;
-                    <button class="edButton" @onclick="() => Edit(item)"><Icon Name="IconName.Pencil"/></button> &ensp;
-                    <button class="delButton" @onclick="() => Delete(item)"><Icon Name="IconName.Trash"/></button>
-                </div>
-            </li>
-            i++;
-        }
-    </ul>
-}
-<hr/>
-<h2>Dodawanie zadań do listy</h2>
-<br/>
-<label for="addTask">Napisz nowe zadanie</label>
-<input @bind="InputValue" name="addTask" type="text" />
-<Button Color="ButtonColor.Primary" @onclick="AddItem">Dodaj</Button>
-<hr/>
-<div class="edit-menu" style="@editStyles">
-    <h2>Edytowanie treści zadania z listy</h2>
+    <h1>Lista - @Tasks.Count elementów</h1>
+    @if (Tasks == null)
+    {
+        <p>Lista jest pusta</p>
+    }
+    else
+    {
+        i = 1;
+        <ul>
+            @foreach (var item in Tasks.OrderBy(t => t.SortId))
+            {
+                <li>
+                    <div class="task-line">
+                        <div class="task-name @(item.isDone ? "isDone" : "isNotDone")">@item.SortId. @item.WhatToDo</div> &ensp;
+                        <Switch class="task-checkbox" @onclick="() => changeTaskStatus(item)" @bind-Value="item.isDone" checked="@item.isDone"/> &ensp;
+                        <button class="edButton" @onclick="() => Edit(item)"><Icon Name="IconName.Pencil"/></button> &ensp;
+                        <button class="delButton" @onclick="() => Delete(item)"><Icon Name="IconName.Trash"/></button>
+                    </div>
+                </li>
+                i++;
+            }
+        </ul>
+    }
+    <hr/>
+    <h2>Dodawanie zadań do listy</h2>
     <br/>
-    <label for="oldinputvalue">Edytujesz: </label>
-    <input @bind="OldInputValue" name="oldinputvalue" disabled>
-    <label for="newinputvalue"> Na: </label>
-    <input @bind="EditInputValue" name="newinputvalue" type="text" />
-    <Button Color="ButtonColor.Warning" @onclick="EditValue">Edytuj</Button>
-</div>
-<div class="task-table">
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Zadanie</th>
-            <th>Czy zrobione?</th>
-        </tr>
-        @foreach (var item in Tasks.OrderBy(t => t.SortId))
-        {
+    <label for="addTask">Napisz nowe zadanie</label>
+    <input @bind="InputValue" name="addTask" type="text" />
+    <Button Color="ButtonColor.Primary" @onclick="AddItem">Dodaj</Button>
+    <hr/>
+    <div class="edit-menu" style="@editStyles">
+        <h2>Edytowanie treści zadania z listy</h2>
+        <br/>
+        <label for="oldinputvalue">Edytujesz: </label>
+        <input @bind="OldInputValue" name="oldinputvalue" disabled>
+        <label for="newinputvalue"> Na: </label>
+        <input @bind="EditInputValue" name="newinputvalue" type="text" />
+        <Button Color="ButtonColor.Warning" @onclick="EditValue">Edytuj</Button>
+    </div>
+    <div class="task-table">
+        <table>
             <tr>
-                <td>@item.SortId</td>
-                <td>@item.WhatToDo</td>
-                <td>@item.isDone</td>
+                <th>ID</th>
+                <th>Zadanie</th>
+                <th>Czy zrobione?</th>
             </tr>
-        }
-    </table>
-</div>
-@code {
-    public int i { get; set; }
-    private string InputValue { get; set; }
-    private string OldInputValue { get; set; }
-    private string editStyles = "visibility: hidden;";
-    public string taskId { get; set; }
-    private string EditInputValue { get; set; }
-    private List<Data.Task> Tasks { get; set; }
-    private bool isDone { get; set; }
-    private DocumentStore store;
-    
-    private void changeTaskStatus(Data.Task selectedTask)
-    {       
-        using var session = store.OpenSession();
-        selectedTask.isDone = !selectedTask.isDone;
-        session.SaveChanges();
-        Tasks = session.Query<Data.Task>().ToList();
-    }
-    private void Delete(Data.Task selectedTask)
-    {
-        using var session = store.OpenSession();
-        Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
-        session.Delete(loadedTask);
-        session.SaveChanges();
-        Tasks = session.Query<Data.Task>().ToList();
-        OldInputValue = "";
-    }
-
-    private void Edit(Data.Task selectedTask)
-    {
+            @foreach (var item in Tasks.OrderBy(t => t.SortId))
+            {
+                <tr>
+                    <td>@item.SortId</td>
+                    <td>@item.WhatToDo</td>
+                    <td class="@(item.isDone ? "true" : "false")">@item.isDone</td>
+                </tr>
+            }
+        </table>
+    </div>
+    @code {
+        public int i { get; set; }
+        public int najwiekszeId { get; set; }
+        private string InputValue { get; set; }
+        private string OldInputValue { get; set; }
+        private string editStyles = "visibility: hidden;";
+        public string taskId { get; set; }
+        private string EditInputValue { get; set; }
+        private List<Data.Task> Tasks { get; set; }
+        private bool isDone { get; set; }
+        private DocumentStore store;
+        
+        private void changeTaskStatus(Data.Task selectedTask)
+        {       
             using var session = store.OpenSession();
             Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
-            OldInputValue = loadedTask.WhatToDo;
-            taskId = loadedTask.Id;
-            editStyles = "visibility: visible;";
-    }
-
-    private async Task EditValue()
-    {
-        if (string.IsNullOrEmpty(EditInputValue))
-        {
-            JSRuntime.InvokeVoidAsync("alert", "Błąd! Nowe zadanie nie może być puste!");    
-        }
-        else
-        {
-            using var session = store.OpenSession();
-            Data.Task loadedTask = session.Load<Data.Task>(taskId);
-            loadedTask.WhatToDo = EditInputValue;
+            loadedTask.isDone = !loadedTask.isDone;
             session.SaveChanges();
             Tasks = session.Query<Data.Task>().ToList();
-            JSRuntime.InvokeVoidAsync("alert", "Pomyslnie zmieniono nazwe zadania z \"" + OldInputValue + "\" na \"" + EditInputValue + "\"");
-            EditInputValue = "";
-            OldInputValue = "";
-            editStyles = "visibility: hidden;";
         }
-    }
-    private async Task AddItem()
-    {
-        if (string.IsNullOrEmpty(InputValue))
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Błąd! Pole tekstowe nie może być puste!");
-        }
-        else
+        private void Delete(Data.Task selectedTask)
         {
             using var session = store.OpenSession();
-            session.Store(new Data.Task { WhatToDo = InputValue, isDone = isDone, SortId = i++});
-            session.SaveChanges();  
+            Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+            session.Delete(loadedTask);
+            session.SaveChanges();
             Tasks = session.Query<Data.Task>().ToList();
-            InputValue = "";
+            OldInputValue = "";
+        }
+
+        private void Edit(Data.Task selectedTask)
+        {
+                using var session = store.OpenSession();
+                Data.Task loadedTask = session.Load<Data.Task>(selectedTask.Id);
+                OldInputValue = loadedTask.WhatToDo;
+                taskId = loadedTask.Id;
+                editStyles = "visibility: visible;";
+        }
+
+        private async Task EditValue()
+        {
+            if (string.IsNullOrEmpty(EditInputValue))
+            {
+                JSRuntime.InvokeVoidAsync("alert", "Błąd! Nowe zadanie nie może być puste!");    
+            }
+            else
+            {
+                using var session = store.OpenSession();
+                Data.Task loadedTask = session.Load<Data.Task>(taskId);
+                loadedTask.WhatToDo = EditInputValue;
+                session.SaveChanges();
+                Tasks = session.Query<Data.Task>().ToList();
+                JSRuntime.InvokeVoidAsync("alert", "Pomyslnie zmieniono nazwe zadania z \"" + OldInputValue + "\" na \"" + EditInputValue + "\"");
+                EditInputValue = "";
+                OldInputValue = "";
+                editStyles = "visibility: hidden;";
+            }
+        }
+        private async Task AddItem()
+        {
+            if (string.IsNullOrEmpty(InputValue))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Błąd! Pole tekstowe nie może być puste!");
+            }
+            else
+            {
+                using var session = store.OpenSession();
+                session.Store(new Data.Task { WhatToDo = InputValue, isDone = isDone, SortId = Tasks[Tasks.Count - 1].SortId + 1 });
+                session.SaveChanges();  
+                Tasks = session.Query<Data.Task>().ToList();
+                InputValue = "";
+            }
+        }
+        protected override async Task OnInitializedAsync()
+        {
+            store = new DocumentStore
+            {
+                Urls = new string[] { "http://localhost:8080" },
+                Database = "Tasks",
+            };
+            store.Initialize();
+
+            using var session = store.OpenSession();
+            Tasks = session.Query<Data.Task>().ToList();
         }
     }
-    protected override async Task OnInitializedAsync()
-    {
-        store = new DocumentStore
-        {
-            Urls = new string[] { "http://localhost:8080" },
-            Database = "Tasks",
-        };
-        store.Initialize();
-
-        using var session = store.OpenSession();
-        Tasks = session.Query<Data.Task>().ToList();
-    }
-}

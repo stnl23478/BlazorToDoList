@@ -49,9 +49,23 @@ Switch:hover {
 }
 table {
     border-collapse: collapse;
+    text-align: center;
 }
 
 th, td {
     border: 1px solid black;
     padding: 8px;
+    color: #fff;
+}
+th {
+    background-color: #393646;
+}
+td {
+    background-color: #4F4557;
+}
+.true {
+    background-color: green !important;
+}
+.false {
+    background-color: darkred !important;
 }
