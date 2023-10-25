@@ -1,0 +1,150 @@
+@using Raven.Client.Documents
+@using Raven.Client.Documents.Linq
+@namespace ToDoList.Client.Components
+
+<style>
+    .delButton {
+        color: red;
+        background: none;
+        border: 1px solid rgba(0,0,0,.25);
+        transition: all .4s;
+        border-radius: 50%;
+        height: 30px;
+        width: 30px;
+    }
+    .delButton:hover {
+        background-color: red;
+        color: white;
+        border-color: darkred;
+    }
+    .edButton {
+        color: orange;
+        background: none;
+        border: 1px solid rgba(0,0,0,.25);
+        transition: all .4s;
+        border-radius: 50%;
+        height: 30px;
+        width: 30px;
+    }
+    .edButton:hover {
+        background-color: orange;
+        color: white;
+        border-color: darkorange;
+    }
+    .saveButton {
+        color: #0a53be;
+        background: none;
+        border: 1px solid rgba(0,0,0,.25);
+        transition: all .4s;
+        border-radius: 50%;
+        height: 30px;
+        width: 30px;
+    }
+    .saveButton:hover {
+        background-color: #0a53be;
+        color: white;
+        border-color: darkblue;
+    }
+    .isNotDone {
+        text-decoration: none;
+    }
+    .isDone {
+        text-decoration: line-through;
+        color: grey;
+    }
+    .isNotDisabled {
+        background-color: #0a53be;
+        color: white;
+        border-radius: 8px;
+    }
+    input {
+        width: fit-content;
+    }
+    .task-name {
+        display: inline;
+    }
+    .task-line {
+        display: flex;
+        align-items: center;
+    }
+    Switch:hover {
+        cursor: pointer;
+    }
+    .task-table {
+        position: absolute;
+        bottom: 0px;
+    }
+    table {
+        border-collapse: collapse;
+        text-align: center;
+    }
+    
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        color: #fff;
+    }
+    th {
+        background-color: #393646;
+    }
+    td {
+        background-color: #4F4557;
+    }
+    .true {
+        background-color: green !important;
+    }
+    .false {
+        background-color: darkred !important;
+    }
+</style>
+<div class="task-line">
+    <div class="task-name @(Item.isDone ? "isDone" : "isNotDone")">
+        <input @bind="Item.WhatToDo" class="@(Item.isDone ? "isDone" : "isNotDone") @(_editMode ? "isNotDisabled" : "isDisabled")" disabled="@(!_editMode)"/>
+    </div> &ensp;
+    <Switch class="task-checkbox" @onclick="ChangeTaskState" @bind-Value="Item.isDone" checked="@Item.isDone"/> &ensp;
+    @if (_editMode)
+    {
+        <button class="saveButton" @onclick="ChangeTaskName"><Icon Name="IconName.Save"/></button>
+    }
+    else
+    {
+        <button class="edButton" @onclick="EditTaskName"><Icon Name="IconName.Pencil"/></button>
+    }
+    <button class="delButton" @onclick="DeleteTask"><Icon Name="IconName.Trash"/></button> &ensp;
+</div>
+
+
+@code {
+    
+    [Parameter]
+    [EditorRequired]
+    public Data.Task Item { get; set; }
+    [Parameter]
+    public EventCallback<Data.Task> OnChamge { get; set; }
+    [Parameter]
+    public EventCallback<Data.Task> OnCreate { get; set; }
+    [Parameter]
+    public EventCallback<Data.Task> OnDelete { get; set; }
+
+
+    private bool _editMode;
+    
+    private async Task ChangeTaskName()
+    {
+        _editMode = false;
+        await OnChamge.InvokeAsync(Item);
+    }
+    private async Task ChangeTaskState()
+    {
+        Item.isDone = !Item.isDone;
+        await OnChamge.InvokeAsync(Item);
+    }
+    private async Task DeleteTask()
+    {
+        await OnDelete.InvokeAsync(Item);
+    }
+    private async Task EditTaskName()
+    {
+        _editMode = true;
+    }
+}
