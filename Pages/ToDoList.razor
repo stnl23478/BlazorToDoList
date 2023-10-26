@@ -9,6 +9,7 @@
     <option value="all">Wszystkie</option>
     <option value="notDone">Niewykonane</option>
 </select>
+<br/>
     @if (Tasks == null)
     {
         <p>Lista jest pusta</p>
@@ -22,13 +23,26 @@
                     <ToDoList.Client.Components.TaskItem Item="@item" OnChange="@SaveTask"  OnDelete="@DeleteTask"/>
                 </div>
             }
-           <form @onsubmit=addTask @onfocusout=@(() => Console.WriteLine("Out"))>
-                <input placeholder="Nowe zadanie" @bind="newTask" @bind:event="oninput" @onfocusout=@addTask>
-                <button style="@editStyles">Dodaj</button>
+            <br/>
+            <hr/>
+            <form @onsubmit=addTask>
+                @* @onfocusout=@addTask *@
+                <label for="newTask">Nowe zadanie</label>
+                <input @bind="newTask" @bind:event="oninput" name="newTask" class="newTaskInput">
+                <br/>
+                <label for="taskDate">Data</label>
+                <DateInput TValue="DateOnly" @bind-Value="@forWhen" Placeholder="Enter Date" name="taskDate"/>
+                <br/>
+                <label for="odKiedy">Od Której?</label>
+                <TimeInput TValue="TimeOnly" @bind-Value="fromTime" name="odKiedy"/>
+                <br/>
+                <label for="doKiedy">Do Której?</label>
+                <TimeInput TValue="TimeOnly" @bind-Value="untilTime" name="doKiedy"/>
+                <br/>
+                <Button Color="ButtonColor.Primary"> Stwórz </Button>
             </form>
         </ul>
     }
-    <hr/>
     <div class="task-table">
         <table>
             <tr>
@@ -36,6 +50,9 @@
                 <th>Zadanie</th>
                 <th>Czy Zrobione?</th>
                 <th>Data Dodania</th>
+                <th>Na kiedy?</th>
+                <th>Od której?</th>
+                <th>Do której?</th>
             </tr>
             @foreach (var item in Tasks.OrderBy(o => o.WhenAdded))
             {
@@ -44,6 +61,9 @@
                     <td>@item.WhatToDo</td>
                     <td class="@(item.isDone ? "true" : "false")">@item.isDone</td>
                     <td>@item.WhenAdded</td>
+                    <td>@item.forWhen</td>
+                    <td>@item.fromTime</td>
+                    <td>@item.untilTime</td>
                 </tr>
             }
         </table>
@@ -54,6 +74,9 @@
         public List<Data.Task> Tasks { get; set; }
         private DocumentStore store;
         private string selectedFilter = "all";
+        private DateOnly forWhen = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
+        private TimeOnly fromTime = TimeOnly.FromDateTime(DateTime.Now);
+        private TimeOnly untilTime = TimeOnly.FromDateTime(DateTime.Now.AddHours(1));
 
         private void fliterList(ChangeEventArgs e)
         {
@@ -87,25 +110,12 @@
             session.SaveChanges();
             Refresh();
         }
-
-        public void Enter(KeyboardEventArgs e)
-        {
-            if (e.Code == "Enter" || e.Code == "NumpadEnter")
-            {
-                using var session = store.OpenSession();
-                session.Store(new Data.Task { WhatToDo = newTask, isDone = false, WhenAdded = DateTime.Now});
-                session.SaveChanges();  
-                Tasks = session.Query<Data.Task>().ToList();
-                newTask = "";
-            }
-        }
-
         private void addTask()
         {
             if (!string.IsNullOrEmpty(newTask))
             {
                 using var session = store.OpenSession();
-                session.Store(new Data.Task { WhatToDo = newTask, isDone = false, WhenAdded = DateTime.Now });
+                session.Store(new Data.Task { WhatToDo = newTask, isDone = false, WhenAdded = DateTime.Now, forWhen = forWhen, fromTime = fromTime, untilTime = untilTime});
                 session.SaveChanges();
                 Tasks = session.Query<Data.Task>().ToList();
                 newTask = "";
@@ -113,7 +123,6 @@
         }
         protected override async Task OnInitializedAsync()
         {
-            Console.WriteLine("zaladowano aplikacje");
             store = new DocumentStore
             {
                 Urls = new string[] { "http://localhost:8080" },
@@ -123,3 +132,4 @@
             Refresh();
         }
     }
+

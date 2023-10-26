@@ -96,23 +96,28 @@
     .false {
         background-color: darkred !important;
     }
+    p {
+        display: inline !important;
+        width: 350px !important;
+    }
 </style>
 <div class="task-line">
-    <div class="task-name @(Item.isDone ? "isDone" : "isNotDone")">
-        <input @bind="Item.WhatToDo" class="@(Item.isDone ? "isDone" : "isNotDone") @(_editMode ? "isNotDisabled" : "isDisabled")" disabled="@(!_editMode)"/>
-    </div> &ensp;
     <Switch class="task-checkbox" @onclick="ChangeTaskState" @bind-Value="Item.isDone" checked="@Item.isDone"/> &ensp;
-    @if (_editMode)
-    {
-        <button class="saveButton" @onclick="ChangeTaskName"><Icon Name="IconName.Save"/></button>
-    }
-    else
-    {
-        <button class="edButton" @onclick="EditTaskName"><Icon Name="IconName.Pencil"/></button>
-    }
-    <button class="delButton" @onclick="DeleteTask"><Icon Name="IconName.Trash"/></button> &ensp;
+    <form @onsubmit=@ChangeTaskName>
+        <div class="task-name @(Item.isDone ? "isDone" : "isNotDone")">
+            @if (_editMode)
+            {
+                <input @bind="Item.WhatToDo" class="@(Item.isDone ? "isDone" : "isNotDone") @(_editMode ? "isNotDisabled" : "isDisabled")" disabled="@(!_editMode)" @onfocusout=@ChangeTaskName/>
+            }
+            else
+            {
+                <p onclick="@EditTaskName">@Item.WhatToDo</p>
+            }
+        </div> &ensp;
+    </form>
+    @Item.forWhen (@Item.fromTime - @Item.untilTime)&ensp;
+    <button class="delButton" @onclick="DeleteTask"><Icon Name="IconName.Trash"/></button>
 </div>
-
 
 @code {
     
