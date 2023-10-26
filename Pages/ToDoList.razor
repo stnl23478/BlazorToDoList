@@ -6,8 +6,8 @@
 
 <h1>Lista - @Tasks.Count elementów</h1>
 <select @onchange="fliterList">
-    <option value="notDone">Niewykonane</option>
     <option value="all">Wszystkie</option>
+    <option value="notDone">Niewykonane</option>
 </select>
     @if (Tasks == null)
     {
@@ -19,42 +19,41 @@
             @foreach (var item in Tasks.OrderBy(t => t.WhenAdded))
             {
                 <div>
-                    <ToDoList.Client.Components.TaskItem Item="@item" OnChamge="@SaveTask"  OnDelete="@DeleteTask"/>
+                    <ToDoList.Client.Components.TaskItem Item="@item" OnChange="@SaveTask"  OnDelete="@DeleteTask"/>
                 </div>
             }
+           <form @onsubmit=addTask @onfocusout=@(() => Console.WriteLine("Out"))>
+                <input placeholder="Nowe zadanie" @bind="newTask" @bind:event="oninput" @onfocusout=@addTask>
+                <button style="@editStyles">Dodaj</button>
+            </form>
         </ul>
     }
-    <hr/>
-    <h2>Dodawanie zadań do listy</h2>
-    <br/>
-    <label for="addTask">Napisz nowe zadanie</label>
-    <input @bind="InputValue" name="addTask" type="text" />
-    <Button Color="ButtonColor.Primary" @onclick="AddItem">Dodaj</Button>
     <hr/>
     <div class="task-table">
         <table>
             <tr>
                 <th>ID</th>
                 <th>Zadanie</th>
-                <th>Czy zrobione?</th>
-                <th>Czy Wyłączony?</th>
+                <th>Czy Zrobione?</th>
+                <th>Data Dodania</th>
             </tr>
             @foreach (var item in Tasks.OrderBy(o => o.WhenAdded))
             {
                 <tr>
-                    <td>@item.WhenAdded</td>
+                    <td>@item.Id</td>
                     <td>@item.WhatToDo</td>
                     <td class="@(item.isDone ? "true" : "false")">@item.isDone</td>
+                    <td>@item.WhenAdded</td>
                 </tr>
             }
         </table>
     </div>
     @code {
-        private string InputValue { get; set; }
         private string editStyles = "visibility: hidden;";
+        public string newTask { get; set; }
         public List<Data.Task> Tasks { get; set; }
         private DocumentStore store;
-        private string selectedFilter = "notDone";
+        private string selectedFilter = "all";
 
         private void fliterList(ChangeEventArgs e)
         {
@@ -89,23 +88,32 @@
             Refresh();
         }
 
-        private async Task AddItem()
+        public void Enter(KeyboardEventArgs e)
         {
-            if (string.IsNullOrEmpty(InputValue))
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Błąd! Pole tekstowe nie może być puste!");
-            }
-            else
+            if (e.Code == "Enter" || e.Code == "NumpadEnter")
             {
                 using var session = store.OpenSession();
-                session.Store(new Data.Task { WhatToDo = InputValue, isDone = false, WhenAdded = DateTime.Now});
+                session.Store(new Data.Task { WhatToDo = newTask, isDone = false, WhenAdded = DateTime.Now});
                 session.SaveChanges();  
                 Tasks = session.Query<Data.Task>().ToList();
-                InputValue = "";
+                newTask = "";
+            }
+        }
+
+        private void addTask()
+        {
+            if (!string.IsNullOrEmpty(newTask))
+            {
+                using var session = store.OpenSession();
+                session.Store(new Data.Task { WhatToDo = newTask, isDone = false, WhenAdded = DateTime.Now });
+                session.SaveChanges();
+                Tasks = session.Query<Data.Task>().ToList();
+                newTask = "";
             }
         }
         protected override async Task OnInitializedAsync()
         {
+            Console.WriteLine("zaladowano aplikacje");
             store = new DocumentStore
             {
                 Urls = new string[] { "http://localhost:8080" },

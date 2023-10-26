@@ -120,7 +120,7 @@
     [EditorRequired]
     public Data.Task Item { get; set; }
     [Parameter]
-    public EventCallback<Data.Task> OnChamge { get; set; }
+    public EventCallback<Data.Task> OnChange { get; set; }
     [Parameter]
     public EventCallback<Data.Task> OnCreate { get; set; }
     [Parameter]
@@ -132,12 +132,12 @@
     private async Task ChangeTaskName()
     {
         _editMode = false;
-        await OnChamge.InvokeAsync(Item);
+        await OnChange.InvokeAsync(Item);
     }
     private async Task ChangeTaskState()
     {
         Item.isDone = !Item.isDone;
-        await OnChamge.InvokeAsync(Item);
+        await OnChange.InvokeAsync(Item);
     }
     private async Task DeleteTask()
     {
