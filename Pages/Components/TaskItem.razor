@@ -53,8 +53,6 @@
         color: grey;
     }
     .isNotDisabled {
-        background-color: #0a53be;
-        color: white;
         border-radius: 8px;
     }
     input {
@@ -98,26 +96,36 @@
     }
     p {
         display: inline !important;
-        width: 350px !important;
+        width: fit-content !important;
+    }
+    .dataInputy {
+    display: flex;
+    }
+    form {
+    height: 32px;
     }
 </style>
-<div class="task-line">
-    <Switch class="task-checkbox" @onclick="ChangeTaskState" @bind-Value="Item.isDone" checked="@Item.isDone"/> &ensp;
     <form @onsubmit=@ChangeTaskName>
         <div class="task-name @(Item.isDone ? "isDone" : "isNotDone")">
             @if (_editMode)
             {
-                <input @bind="Item.WhatToDo" class="@(Item.isDone ? "isDone" : "isNotDone") @(_editMode ? "isNotDisabled" : "isDisabled")" disabled="@(!_editMode)" @onfocusout=@ChangeTaskName/>
+                <div class="dataInputy">
+                    <input @bind="Item.WhatToDo" class="@(Item.isDone ? "isDone" : "isNotDone") @(_editMode ? "isNotDisabled" : "isDisabled")" disabled="@(!_editMode)" style="width: fit-content !important; font-size: 16px; height: 30px; outline: none; border:none; background-image:none; background-color:transparent; -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;"/>
+                    @* <DateInput TValue="DateOnly" @bind-Value="Item.StartTime" Placeholder="Enter Date" name="taskDate" style="width: fit-content !important; font-size: 16px; height: 30px; outline: none; border:none; background-image:none; background-color:transparent; -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;"/> *@
+                    @* <TimeInput TValue="TimeOnly" @bind-Value="Item.EndTime" name="odKiedy" style="width: fit-content !important; font-size: 16px; height: 30px; outline: none; border:none; background-image:none; background-color:transparent; -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;"/> *@
+                    <Button Color="ButtonColor.Primary" @onclick="@ChangeTaskName"> Aktualizuj </Button>
+                </div>
             }
             else
             {
-                <p onclick="@EditTaskName">@Item.WhatToDo</p>
+                <div class="dataInputy">
+                    <button class="delButton" @onclick="DeleteTask"><Icon Name="IconName.Trash"/></button>
+                    <Switch class="task-checkbox" @onclick="ChangeTaskState" @bind-Value="Item.isDone" checked="@Item.isDone"/>
+                    <p onclick="@EditTaskName">@Item.WhatToDo - @Item.StartTime (@Item.EndTime )</p>
+                </div>
             }
         </div> &ensp;
     </form>
-    @Item.forWhen (@Item.fromTime - @Item.untilTime)&ensp;
-    <button class="delButton" @onclick="DeleteTask"><Icon Name="IconName.Trash"/></button>
-</div>
 
 @code {
     

@@ -11,6 +11,8 @@
   <ItemGroup>
     <PackageReference Include="Blazor.Bootstrap" Version="1.10.3" />
     <PackageReference Include="RavenDB.Client" Version="6.0.0" />
+    <PackageReference Include="Syncfusion.Blazor.Schedule" Version="23.1.42" />
+    <PackageReference Include="Syncfusion.Blazor.Themes" Version="23.1.42" />
   </ItemGroup>
 
   <ItemGroup>

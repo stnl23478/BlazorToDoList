@@ -5,7 +5,7 @@ public class Task
     public DateTime WhenAdded { get; set; }
     public string WhatToDo { get; set; }
     public bool isDone { get; set; }
-    public DateOnly forWhen { get; set; }
-    public TimeOnly fromTime { get; set; }
-    public TimeOnly untilTime { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    
 }

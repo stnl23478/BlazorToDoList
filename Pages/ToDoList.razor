@@ -23,52 +23,40 @@
                     <ToDoList.Client.Components.TaskItem Item="@item" OnChange="@SaveTask"  OnDelete="@DeleteTask"/>
                 </div>
             }
-            <br/>
-            <hr/>
             <form @onsubmit=addTask>
                 @* @onfocusout=@addTask *@
-                <label for="newTask">Nowe zadanie</label>
-                <input @bind="newTask" @bind:event="oninput" name="newTask" class="newTaskInput">
-                <br/>
-                <label for="taskDate">Data</label>
-                <DateInput TValue="DateOnly" @bind-Value="@forWhen" Placeholder="Enter Date" name="taskDate"/>
-                <br/>
-                <label for="odKiedy">Od Której?</label>
-                <TimeInput TValue="TimeOnly" @bind-Value="fromTime" name="odKiedy"/>
-                <br/>
-                <label for="doKiedy">Do Której?</label>
-                <TimeInput TValue="TimeOnly" @bind-Value="untilTime" name="doKiedy"/>
-                <br/>
-                <Button Color="ButtonColor.Primary"> Stwórz </Button>
+                <div class="dataInputy">
+                    <input @bind="newTask" @bind:event="oninput" name="newTask" class="newTaskInput" placeholder="Wpisz nowe zadanie" style="width: fit-content !important; font-size: 16px; height: 30px; background-image:none; background-color:transparent; -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;">
+                    <SfDateTimePicker TValue="DateTime?" @bind="StartTime" FullScreen="true" ShowClearButton="true"></SfDateTimePicker>
+                    <SfDateTimePicker TValue="DateTime?" @bind="EndTime" FullScreen="true" ShowClearButton="true"></SfDateTimePicker>
+                    <Button Color="ButtonColor.Primary" @onclick="@addTask"> Stwórz </Button>
+                </div>
             </form>
         </ul>
     }
-    <div class="task-table">
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Zadanie</th>
-                <th>Czy Zrobione?</th>
-                <th>Data Dodania</th>
-                <th>Na kiedy?</th>
-                <th>Od której?</th>
-                <th>Do której?</th>
-            </tr>
-            @foreach (var item in Tasks.OrderBy(o => o.WhenAdded))
-            {
-                <tr>
-                    <td>@item.Id</td>
-                    <td>@item.WhatToDo</td>
-                    <td class="@(item.isDone ? "true" : "false")">@item.isDone</td>
-                    <td>@item.WhenAdded</td>
-                    <td>@item.forWhen</td>
-                    <td>@item.fromTime</td>
-                    <td>@item.untilTime</td>
-                </tr>
-            }
-        </table>
-    </div>
-    @code {
+<SfSchedule TValue=Data.Task>
+    <ScheduleEventSettings DataSource="@Tasks">
+        <ScheduleField Id="Id">
+            <FieldSubject Name="WhatToDo"></FieldSubject>
+            <FieldStartTime Name="StartTime"></FieldStartTime>
+            <FieldEndTime Name="EndTime"></FieldEndTime>
+            <FieldRecurrenceRule Name="ShipRegion"></FieldRecurrenceRule>
+            <FieldDescription Name="isDone"></FieldDescription>
+        </ScheduleField>        
+    </ScheduleEventSettings>
+    <ScheduleViews>
+        <ScheduleView Option="View.Day"></ScheduleView>
+        <ScheduleView Option="View.Week"></ScheduleView>
+        <ScheduleView Option="View.WorkWeek"></ScheduleView>
+        <ScheduleView Option="View.Month"></ScheduleView>
+        <ScheduleView Option="View.Agenda"></ScheduleView>
+    </ScheduleViews>
+</SfSchedule>
+
+@code {
+        public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
+        public int i { get; set; }
         private string editStyles = "visibility: hidden;";
         public string newTask { get; set; }
         public List<Data.Task> Tasks { get; set; }
@@ -99,6 +87,8 @@
             Data.Task loadedTask = session.Load<Data.Task>(item.Id);
             loadedTask.WhatToDo = item.WhatToDo;
             loadedTask.isDone = item.isDone;
+            loadedTask.StartTime = item.StartTime;
+            loadedTask.EndTime = item.EndTime;
             session.SaveChanges();
             Refresh();
         }
@@ -115,7 +105,7 @@
             if (!string.IsNullOrEmpty(newTask))
             {
                 using var session = store.OpenSession();
-                session.Store(new Data.Task { WhatToDo = newTask, isDone = false, WhenAdded = DateTime.Now, forWhen = forWhen, fromTime = fromTime, untilTime = untilTime});
+                session.Store(new Data.Task { WhatToDo = newTask, isDone = false, WhenAdded = DateTime.Now});
                 session.SaveChanges();
                 Tasks = session.Query<Data.Task>().ToList();
                 newTask = "";
